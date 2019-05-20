@@ -1,0 +1,42 @@
+Instructions to run locally:
+
+-run npm install in anagram-app folder
+-run node server.js in anagram-app folder
+
+deployed on aws at this url: Anagram-env.xmit364ggm.us-east-1.elasticbeanstalk.com
+
+
+Design Thoughts: 
+
+Current Design:  The current design of this application is based around loading a file at startup and then storing all this 
+data in memory. 
+
+The file loading is asynchronous in case of needing to reload the file when the server is running.  This prevents blocking the 
+main thread making any requests coming in blocked until file loading is complete.
+
+The cache design for anagrams is meant for fast lookups. Using a hashmap with the key being the sorted word means that after
+you sort the incoming word from the api call it is constant time lookup on average.  The cache design could be made more 
+generic decoupling any actual implementation details of anagrams with it if there was a good reason for this.  
+I thought this design works with the limited scope given.
+
+
+Future Design:
+A permanent data store could be useful if you didn't want to keep loading the data from a file and to permanently store any added
+words from the api.  I think a NOSQL database would be a good use case in this scenario, you could just keep everything as 
+key value just like the cache is designed.
+
+More logging for traceablility of what is happening on the service
+Make sure any validations on data are how we would want them.  String length and list length for client side requests.
+
+Duplicate words:  Easy to solve for if that is the requirement. 
+ A set can be created instead of an array for the cache
+
+
+Statistics:  There are some things I considered with my implementation.  I thought about caching the results of building the Statistics
+instead of calculating them on the fly each time,  there are trade offs here.  Calculating on the fly is a little bit expensive for every 
+call to /stats endpoint.  If the stats were cached they would need to be rebuilt each time words are added or deleted making these calls slower.
+If the list of words ends up getting really large a threaded implementation might start making sense with Nodejs.  It is also possible to
+keep the total count in memory for calculating average so you don't have to iterate over the list again to calculate the average.
+
+Proper Nouns:  Currently the implementation is to lowercase all words.  Depending on how you see proper nouns as anagrams
+you can just not lowercase all words in the cache, and do the comparison the same way.
